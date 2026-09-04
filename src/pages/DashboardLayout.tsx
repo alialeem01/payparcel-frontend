@@ -2,7 +2,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
   Package, LayoutDashboard, PackagePlus, Layers, List, Search,
-  CreditCard, Settings, BarChart3, LogOut,
+  CreditCard, Settings, BarChart3, LogOut, ClipboardList,
 } from 'lucide-react'
 
 export default function DashboardLayout() {
@@ -20,6 +20,7 @@ export default function DashboardLayout() {
     { to: '/dashboard/bulk-booking', label: 'Bulk Booking', icon: Layers, end: false },
     { to: '/dashboard/orders', label: 'My Parcels', icon: List, end: false },
     { to: '/dashboard/track', label: 'Tracker', icon: Search, end: false },
+    { to: '/dashboard/delivery-sheets', label: 'Delivery Sheets', icon: ClipboardList, end: false },
     { to: '/dashboard/billing', label: 'Billing', icon: CreditCard, end: false },
     { to: '/dashboard/edit-info', label: 'Edit Info', icon: Settings, end: false },
     { to: '/dashboard/reports', label: 'Reports', icon: BarChart3, end: false },

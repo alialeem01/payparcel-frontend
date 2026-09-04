@@ -276,3 +276,24 @@ export function generateTrackingId(): string {
   const rand = Math.random().toString(36).slice(2, 7).toUpperCase()
   return `${prefix}${y}${m}${d}${rand}`
 }
+
+export interface DeliverySheet {
+  ds_number: string
+  tracking_number: string
+  date: string
+  status: string
+  rider_name: string | null
+  rider_contact: string | null
+  rider_vehicle: string | null
+  total_parcels: number
+  total_weight: number
+  total_cod: number
+  print_url: string | null
+}
+
+export async function fetchDeliverySheets(): Promise<DeliverySheet[]> {
+  const res = await fetch(`${API_BASE_URL}/api/customers/delivery-sheets/`, {
+    headers: { ...authHeaders() },
+  })
+  return handleResponse<DeliverySheet[]>(res)
+}

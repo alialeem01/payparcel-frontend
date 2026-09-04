@@ -11,6 +11,7 @@ import OrdersListPage from './pages/OrdersListPage'
 import OrderDetailPage from './pages/OrderDetailPage'
 import DashboardTrackPage from './pages/DashboardTrackPage'
 import EditInfoPage from './pages/EditInfoPage'
+import DeliverySheetsPage from './pages/DeliverySheetsPage'
 import PublicHeader from './components/PublicHeader'
 import { Loader2, Layers, CreditCard, BarChart3 } from 'lucide-react'
 
@@ -52,6 +53,7 @@ function AppRoutes() {
         <Route path="orders" element={<OrdersListPage />} />
         <Route path="orders/:id" element={<OrderDetailPage />} />
         <Route path="track" element={<DashboardTrackPage />} />
+        <Route path="delivery-sheets" element={<DeliverySheetsPage />} />
         <Route path="billing" element={<ComingSoonPage title="Billing" icon={CreditCard} />} />
         <Route path="edit-info" element={<EditInfoPage />} />
         <Route path="reports" element={<ComingSoonPage title="Reports" icon={BarChart3} />} />
