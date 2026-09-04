@@ -223,6 +223,27 @@ export async function bookOrder(payload: BookOrderPayload): Promise<BookOrderRes
   return handleResponse<BookOrderResponse>(res)
 }
 
+export interface BulkBookError {
+  row: number
+  error: string
+}
+
+export interface BulkBookResponse {
+  created: string[]
+  errors: BulkBookError[]
+}
+
+export async function bulkBookOrders(file: File): Promise<BulkBookResponse> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const res = await fetch(`${API_BASE_URL}/api/orders/bulk-book/`, {
+    method: 'POST',
+    headers: { ...authHeaders() },
+    body: formData,
+  })
+  return handleResponse<BulkBookResponse>(res)
+}
+
 export async function updateOrderStatus(id: string, status: OrderStatus): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/api/orders/${id}/`, {
     method: 'PATCH',

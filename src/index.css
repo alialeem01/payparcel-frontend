@@ -925,3 +925,63 @@ button.row-link:not(:disabled):hover { color: var(--blue-700); }
   .stats-grid { grid-template-columns: 1fr; }
   .hero-content h1 { font-size: 26px; }
 }
+
+/* Bulk Booking */
+.bulk-instructions {
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.bulk-instructions h3 { font-size: 16px; margin-bottom: 12px; }
+.bulk-instructions ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.bulk-instructions li { font-size: 14px; color: var(--slate-600); line-height: 1.6; }
+
+.upload-zone {
+  border: 2px dashed var(--slate-300);
+  border-radius: var(--radius);
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 24px;
+  background: var(--white);
+}
+.upload-zone:hover { border-color: var(--blue-500); background: var(--blue-50); }
+.upload-zone.drag-over { border-color: var(--blue-600); background: var(--blue-50); }
+.upload-prompt { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--slate-500); }
+.upload-prompt span { font-size: 15px; }
+.upload-hint { font-size: 13px; color: var(--slate-400); }
+.upload-file-info { display: flex; align-items: center; gap: 16px; color: var(--slate-700); }
+.upload-file-info > div { display: flex; flex-direction: column; gap: 2px; text-align: left; flex: 1; }
+.upload-file-name { font-weight: 600; font-size: 15px; }
+.upload-file-size { font-size: 13px; color: var(--slate-400); }
+.upload-remove-btn {
+  border: none; background: var(--slate-100); color: var(--slate-500);
+  border-radius: 50%; width: 32px; height: 32px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.upload-remove-btn:hover { background: var(--red-50); color: var(--red-500); }
+
+.bulk-results { display: flex; flex-direction: column; gap: 24px; }
+.bulk-result-section {
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+.bulk-result-header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.bulk-result-header h3 { font-size: 16px; }
+.bulk-success .bulk-result-header { color: var(--green-600); }
+.bulk-errors .bulk-result-header { color: var(--red-500); }
+.bulk-cn-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.bulk-cn-chip {
+  background: var(--green-50);
+  color: var(--green-700);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--green-200);
+}
