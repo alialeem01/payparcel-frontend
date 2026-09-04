@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { fetchDeliverySheets, statusSlug, safeText, type DeliverySheet } from '../lib/api'
+import { fetchDeliverySheets, statusSlug, safeText, API_BASE_URL, type DeliverySheet } from '../lib/api'
 import { ClipboardList, Loader2, Printer, Search } from 'lucide-react'
 
 function formatRs(value: number): string {
@@ -37,7 +37,10 @@ export default function DeliverySheetsPage() {
 
   function handlePrint(sheet: DeliverySheet) {
     if (sheet.print_url) {
-      window.open(sheet.print_url, '_blank', 'noopener,noreferrer')
+      const url = sheet.print_url.startsWith('http')
+        ? sheet.print_url
+        : `${API_BASE_URL}${sheet.print_url}`
+      window.open(url, '_blank', 'noopener,noreferrer')
     }
   }
 
