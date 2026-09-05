@@ -178,7 +178,9 @@ async function doRefresh(): Promise<string | null> {
     return newAccess
   } catch {
     clearTokens()
-    onAuthExpired?.()
+    // Notify the app that auth has fully expired — will redirect to login
+    // Use setTimeout so this doesn't fire synchronously inside initial load
+    setTimeout(() => onAuthExpired?.(), 0)
     return null
   }
 }
@@ -236,23 +238,30 @@ export async function apiFetch(
   path: string,
   options: RequestInit = {},
 ): Promise<Response> {
+  const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`
   const merged: RequestInit = {
     ...options,
     headers: { ...authHeaders(), ...(options.headers ?? {}) },
   }
-  const res = await fetch(path.startsWith('http') ? path : `${API_BASE_URL}${path}`, merged)
+  const res = await fetch(url, merged)
 
   if (res.status !== 401) return res
 
-  // Try silent refresh + retry
+  // Try silent refresh + retry once
   const newToken = await refreshAccessToken()
-  if (!newToken) return res
+  if (!newToken) {
+    // Return a synthetic 401 response so callers see an error;
+    // onAuthExpired will fire asynchronously via doRefresh's setTimeout
+    return new Response(JSON.stringify({ detail: 'Session expired. Please log in again.' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
 
-  const retryRes = await fetch(path.startsWith('http') ? path : `${API_BASE_URL}${path}`, {
+  return fetch(url, {
     ...options,
     headers: { ...authHeaders(), ...(options.headers ?? {}) },
   })
-  return retryRes
 }
 
 async function handleResponse<T>(res: Response): Promise<T> {

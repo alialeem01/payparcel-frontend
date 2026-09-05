@@ -35,6 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function loadProfile() {
     const token = getAccessToken()
     if (!token) {
+      setUser(null)
+      setProfile(null)
       setLoading(false)
       return
     }
@@ -43,8 +45,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser({ id: data.id })
       setProfile(data)
       scheduleRefresh()
-    } catch {
-      clearTokens()
+    } catch (err) {
+      // Only clear tokens for definitive auth failures.
+      // Transient errors (network, 5xx) should not log the user out.
+      const msg = err instanceof Error ? err.message : ''
+      if (msg.toLowerCase().includes('session expired') || msg.toLowerCase().includes('unauthorized')) {
+        clearTokens()
+        setUser(null)
+        setProfile(null)
+      }
+      // Otherwise leave existing state as-is; the user stays logged in
     } finally {
       setLoading(false)
     }
@@ -52,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setAuthExpiredHandler(() => {
+      clearTokens()
       setUser(null)
       setProfile(null)
       window.location.href = '/login'
