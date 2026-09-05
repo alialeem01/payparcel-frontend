@@ -3,8 +3,10 @@ import {
   fetchProfile,
   loginCustomer,
   registerCustomer,
-  clearToken,
-  getToken,
+  clearTokens,
+  getAccessToken,
+  setAuthExpiredHandler,
+  scheduleRefresh,
   type Customer,
 } from '../lib/api'
 
@@ -31,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   async function loadProfile() {
-    const token = getToken()
+    const token = getAccessToken()
     if (!token) {
       setLoading(false)
       return
@@ -40,15 +42,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await fetchProfile()
       setUser({ id: data.id })
       setProfile(data)
+      scheduleRefresh()
     } catch {
-      clearToken()
+      clearTokens()
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
+    setAuthExpiredHandler(() => {
+      setUser(null)
+      setProfile(null)
+      window.location.href = '/login'
+    })
     loadProfile()
+    return () => setAuthExpiredHandler(null)
   }, [])
 
   const value: AuthContextType = {
@@ -80,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     async signOut() {
-      clearToken()
+      clearTokens()
       setUser(null)
       setProfile(null)
     },

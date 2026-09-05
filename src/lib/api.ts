@@ -53,6 +53,7 @@ export interface Customer {
 
 export interface Order {
   id: string
+  cn: string
   tracking_id: string
   customer_name: string
   consignee: string
@@ -61,6 +62,7 @@ export interface Order {
   cod: number
   created_at: string
   updated_at: string
+  tracking_qr_code: string | null
 }
 
 export interface OrderStatusCount {
@@ -114,23 +116,143 @@ export function safeText(value: string | null | undefined): string {
   return value ?? '—'
 }
 
-const TOKEN_KEY = 'pp_access_token'
-
-export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY)
+export function resolveApiUrl(url: string | null | undefined): string | null {
+  if (!url) return null
+  if (url.startsWith('http')) return url
+  return `${API_BASE_URL}${url}`
 }
 
-export function setToken(token: string): void {
-  localStorage.setItem(TOKEN_KEY, token)
+// ---------------------------------------------------------------------------
+// Token management (access + refresh) with automatic silent refresh
+// ---------------------------------------------------------------------------
+
+const ACCESS_TOKEN_KEY = 'pp_access_token'
+const REFRESH_TOKEN_KEY = 'pp_refresh_token'
+
+let onAuthExpired: (() => void) | null = null
+
+export function setAuthExpiredHandler(handler: (() => void) | null): void {
+  onAuthExpired = handler
 }
 
-export function clearToken(): void {
-  localStorage.removeItem(TOKEN_KEY)
+export function getAccessToken(): string | null {
+  return localStorage.getItem(ACCESS_TOKEN_KEY)
+}
+
+export function getRefreshToken(): string | null {
+  return localStorage.getItem(REFRESH_TOKEN_KEY)
+}
+
+export function setTokens(access: string, refresh?: string): void {
+  localStorage.setItem(ACCESS_TOKEN_KEY, access)
+  if (refresh) localStorage.setItem(REFRESH_TOKEN_KEY, refresh)
+}
+
+export function clearTokens(): void {
+  localStorage.removeItem(ACCESS_TOKEN_KEY)
+  localStorage.removeItem(REFRESH_TOKEN_KEY)
+}
+
+// Backwards-compatible aliases used by AuthContext
+export const getToken = getAccessToken
+export const setToken = (token: string) => setTokens(token)
+export const clearToken = clearTokens
+
+let refreshPromise: Promise<string | null> | null = null
+
+async function doRefresh(): Promise<string | null> {
+  const refresh = getRefreshToken()
+  if (!refresh) return null
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/token/refresh/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh }),
+    })
+    if (!res.ok) throw new Error('refresh failed')
+    const data = await res.json()
+    const newAccess: string = data.access
+    const newRefresh: string | undefined = data.refresh
+    setTokens(newAccess, newRefresh)
+    scheduleRefresh()
+    return newAccess
+  } catch {
+    clearTokens()
+    onAuthExpired?.()
+    return null
+  }
+}
+
+function refreshAccessToken(): Promise<string | null> {
+  if (!refreshPromise) {
+    refreshPromise = doRefresh().finally(() => {
+      refreshPromise = null
+    })
+  }
+  return refreshPromise
+}
+
+// Proactive refresh: schedule a refresh ~60s before the access token expires.
+let refreshTimer: ReturnType<typeof setTimeout> | null = null
+
+function decodeTokenExp(token: string): number | null {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return typeof payload.exp === 'number' ? payload.exp * 1000 : null
+  } catch {
+    return null
+  }
+}
+
+export function scheduleRefresh(): void {
+  if (refreshTimer) {
+    clearTimeout(refreshTimer)
+    refreshTimer = null
+  }
+  const token = getAccessToken()
+  if (!token) return
+  const exp = decodeTokenExp(token)
+  if (!exp) return
+  const delay = exp - Date.now() - 60_000
+  if (delay <= 0) {
+    refreshAccessToken()
+  } else {
+    refreshTimer = setTimeout(() => refreshAccessToken(), delay)
+  }
 }
 
 function authHeaders(): Record<string, string> {
-  const token = getToken()
+  const token = getAccessToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+/**
+ * Central fetch wrapper that:
+ *  - attaches the JWT auth header
+ *  - on 401, silently refreshes the access token and retries once
+ *  - if refresh fails, clears tokens and triggers redirect to login
+ */
+export async function apiFetch(
+  path: string,
+  options: RequestInit = {},
+): Promise<Response> {
+  const merged: RequestInit = {
+    ...options,
+    headers: { ...authHeaders(), ...(options.headers ?? {}) },
+  }
+  const res = await fetch(path.startsWith('http') ? path : `${API_BASE_URL}${path}`, merged)
+
+  if (res.status !== 401) return res
+
+  // Try silent refresh + retry
+  const newToken = await refreshAccessToken()
+  if (!newToken) return res
+
+  const retryRes = await fetch(path.startsWith('http') ? path : `${API_BASE_URL}${path}`, {
+    ...options,
+    headers: { ...authHeaders(), ...(options.headers ?? {}) },
+  })
+  return retryRes
 }
 
 async function handleResponse<T>(res: Response): Promise<T> {
@@ -141,6 +263,10 @@ async function handleResponse<T>(res: Response): Promise<T> {
   }
   return res.json() as Promise<T>
 }
+
+// ---------------------------------------------------------------------------
+// Public API functions
+// ---------------------------------------------------------------------------
 
 interface RegisterPayload {
   business_name: string
@@ -162,6 +288,7 @@ export async function registerCustomer(payload: RegisterPayload): Promise<void> 
 
 interface LoginResponse {
   access: string
+  refresh?: string
 }
 
 export async function loginCustomer(email: string, password: string): Promise<void> {
@@ -171,27 +298,22 @@ export async function loginCustomer(email: string, password: string): Promise<vo
     body: JSON.stringify({ email, password }),
   })
   const data = await handleResponse<LoginResponse>(res)
-  setToken(data.access)
+  setTokens(data.access, data.refresh)
+  scheduleRefresh()
 }
 
 export async function fetchProfile(): Promise<Customer> {
-  const res = await fetch(`${API_BASE_URL}/api/customers/me/`, {
-    headers: { ...authHeaders() },
-  })
+  const res = await apiFetch('/api/customers/me/')
   return handleResponse<Customer>(res)
 }
 
 export async function fetchOrders(): Promise<Order[]> {
-  const res = await fetch(`${API_BASE_URL}/api/orders/`, {
-    headers: { ...authHeaders() },
-  })
+  const res = await apiFetch('/api/orders/')
   return handleResponse<Order[]>(res)
 }
 
 export async function fetchOrder(id: string): Promise<Order> {
-  const res = await fetch(`${API_BASE_URL}/api/orders/${id}/`, {
-    headers: { ...authHeaders() },
-  })
+  const res = await apiFetch(`/api/orders/${id}/`)
   return handleResponse<Order>(res)
 }
 
@@ -215,9 +337,9 @@ export interface BookOrderResponse {
 }
 
 export async function bookOrder(payload: BookOrderPayload): Promise<BookOrderResponse> {
-  const res = await fetch(`${API_BASE_URL}/api/orders/book/`, {
+  const res = await apiFetch('/api/orders/book/', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
   return handleResponse<BookOrderResponse>(res)
@@ -236,18 +358,17 @@ export interface BulkBookResponse {
 export async function bulkBookOrders(file: File): Promise<BulkBookResponse> {
   const formData = new FormData()
   formData.append('file', file)
-  const res = await fetch(`${API_BASE_URL}/api/orders/bulk-book/`, {
+  const res = await apiFetch('/api/orders/bulk-book/', {
     method: 'POST',
-    headers: { ...authHeaders() },
     body: formData,
   })
   return handleResponse<BulkBookResponse>(res)
 }
 
 export async function updateOrderStatus(id: string, status: OrderStatus): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/api/orders/${id}/`, {
+  const res = await apiFetch(`/api/orders/${id}/`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status }),
   })
   await handleResponse(res)
@@ -266,9 +387,7 @@ export async function fetchDashboardSummary(from?: string, to?: string): Promise
   if (from) params.set('from', from)
   if (to) params.set('to', to)
   const query = params.toString() ? `?${params.toString()}` : ''
-  const res = await fetch(`${API_BASE_URL}/api/dashboard-summary/${query}`, {
-    headers: { ...authHeaders() },
-  })
+  const res = await apiFetch(`/api/dashboard-summary/${query}`)
   return handleResponse<DashboardSummary>(res)
 }
 
@@ -280,9 +399,9 @@ interface UpdateProfilePayload {
 }
 
 export async function updateProfile(payload: UpdateProfilePayload): Promise<Customer> {
-  const res = await fetch(`${API_BASE_URL}/api/customers/update-profile/`, {
+  const res = await apiFetch('/api/customers/update-profile/', {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
   return handleResponse<Customer>(res)
@@ -301,6 +420,7 @@ export function generateTrackingId(): string {
 export interface DeliverySheet {
   ds_number: string
   tracking_number: string
+  qr_url: string | null
   date: string
   status: string
   rider_name: string | null
@@ -313,8 +433,6 @@ export interface DeliverySheet {
 }
 
 export async function fetchDeliverySheets(): Promise<DeliverySheet[]> {
-  const res = await fetch(`${API_BASE_URL}/api/customers/delivery-sheets/`, {
-    headers: { ...authHeaders() },
-  })
+  const res = await apiFetch('/api/customers/delivery-sheets/')
   return handleResponse<DeliverySheet[]>(res)
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { fetchOrders, statusSlug, type Order } from '../lib/api'
+import { fetchOrders, resolveApiUrl, statusSlug, type Order } from '../lib/api'
 import { Package, Loader2, Plus, Search, ArrowRight } from 'lucide-react'
 
 function formatRs(value: number): string {
@@ -22,6 +22,7 @@ export default function OrdersListPage() {
   const filtered = orders.filter((o) => {
     const q = search.toLowerCase()
     return (
+      (o.cn ?? '').toLowerCase().includes(q) ||
       (o.tracking_id ?? '').toLowerCase().includes(q) ||
       (o.consignee ?? '').toLowerCase().includes(q) ||
       (o.status ?? '').toLowerCase().includes(q) ||
@@ -38,7 +39,7 @@ export default function OrdersListPage() {
 
       <div className="search-bar">
         <Search size={18} />
-        <input type="text" placeholder="Search by CN, consignee, status, or city..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        <input type="text" placeholder="Search by tracking number, consignee, status, or city..." value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
       {loading ? (
@@ -55,27 +56,38 @@ export default function OrdersListPage() {
           <table className="orders-table">
             <thead>
               <tr>
-                <th>CN</th>
+                <th>Tracking Number</th>
+                <th>QR</th>
                 <th>Consignee</th>
                 <th>Status</th>
                 <th>City</th>
                 <th>COD</th>
-                <th>Created Date</th>
+                <th>Date Created</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((o) => (
-                <tr key={o.id}>
-                  <td className="tracking-cell">{o.tracking_id}</td>
-                  <td>{o.consignee ?? o.customer_name ?? '—'}</td>
-                  <td><span className={`status-badge status-${statusSlug(o.status)}`}>{o.status ?? '—'}</span></td>
-                  <td>{o.city ?? '—'}</td>
-                  <td>Rs. {formatRs(o.cod ?? 0)}</td>
-                  <td className="date-cell">{new Date(o.created_at).toLocaleDateString()}</td>
-                  <td><Link to={`/dashboard/orders/${o.id}`} className="row-link">Details <ArrowRight size={14} /></Link></td>
-                </tr>
-              ))}
+              {filtered.map((o) => {
+                const qrUrl = resolveApiUrl(o.tracking_qr_code)
+                return (
+                  <tr key={o.id}>
+                    <td className="tracking-cell">{o.cn ?? o.tracking_id ?? '—'}</td>
+                    <td>
+                      {qrUrl ? (
+                        <img src={qrUrl} alt="QR code" className="qr-thumb" />
+                      ) : (
+                        <span className="muted">—</span>
+                      )}
+                    </td>
+                    <td>{o.consignee ?? o.customer_name ?? '—'}</td>
+                    <td><span className={`status-badge status-${statusSlug(o.status)}`}>{o.status ?? '—'}</span></td>
+                    <td>{o.city ?? '—'}</td>
+                    <td>Rs. {formatRs(o.cod ?? 0)}</td>
+                    <td className="date-cell">{new Date(o.created_at).toLocaleDateString()}</td>
+                    <td><Link to={`/dashboard/orders/${o.id}`} className="row-link">Details <ArrowRight size={14} /></Link></td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>

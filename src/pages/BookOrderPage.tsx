@@ -32,6 +32,12 @@ export default function BookOrderPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
+
+    if (!form.city) {
+      setError('Please select a city before creating the order.')
+      return
+    }
+
     setLoading(true)
 
     try {
