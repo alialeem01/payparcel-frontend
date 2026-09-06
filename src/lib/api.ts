@@ -410,7 +410,7 @@ export async function updateOrderStatus(id: string, status: OrderStatus): Promis
 }
 
 export async function trackOrder(trackingId: string): Promise<TrackingResult> {
-  const res = await fetch(`${API_BASE_URL}/api/track/${encodeURIComponent(trackingId)}/`)
+  const res = await fetch(`${API_BASE_URL}/api/track/${encodeURIComponent(trackingId.trim())}/`)
   if (res.status === 404) {
     throw new Error('Tracking ID not found')
   }
