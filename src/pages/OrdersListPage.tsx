@@ -84,7 +84,7 @@ export default function OrdersListPage() {
                     <td>{o.city ?? '—'}</td>
                     <td>Rs. {formatRs(o.cod ?? 0)}</td>
                     <td className="date-cell">{new Date(o.created_at).toLocaleDateString()}</td>
-                    <td><Link to={`/dashboard/orders/${o.id}`} className="row-link">Details <ArrowRight size={14} /></Link></td>
+                    <td><Link to={`/dashboard/orders/${o.id ?? o.cn}`} className="row-link">Details <ArrowRight size={14} /></Link></td>
                   </tr>
                 )
               })}

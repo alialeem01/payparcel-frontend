@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { fetchOrder, updateOrderStatus, ORDER_STATUSES, STATUS_PROGRESS, TERMINAL_STATUSES, statusSlug, type Order, type OrderStatus } from '../lib/api'
+import { fetchOrder, updateOrderStatus, resolveApiUrl, ORDER_STATUSES, STATUS_PROGRESS, TERMINAL_STATUSES, statusSlug, safeText, type Order, type OrderStatus } from '../lib/api'
 import { Loader2, ArrowLeft, Package, CheckCircle2, Clock } from 'lucide-react'
 
 export default function OrderDetailPage() {
@@ -23,7 +23,7 @@ export default function OrderDetailPage() {
     if (!order) return
     setUpdating(true)
     try {
-      await updateOrderStatus(order.id, newStatus)
+      await updateOrderStatus(order.id ?? order.cn, newStatus)
       setOrder({ ...order, status: newStatus, updated_at: new Date().toISOString() })
     } catch {
       // keep current status on failure
@@ -49,6 +49,8 @@ export default function OrderDetailPage() {
   const isTerminal = (TERMINAL_STATUSES as string[]).includes(order.status)
   const currentStepIndex = STATUS_PROGRESS.indexOf(order.status as (typeof STATUS_PROGRESS)[number])
   const showProgress = !isTerminal && currentStepIndex >= 0
+  const trackingNumber = order.cn ?? order.tracking_id ?? '—'
+  const qrUrl = resolveApiUrl(order.tracking_qr_code)
 
   return (
     <div className="page-wrap">
@@ -58,24 +60,36 @@ export default function OrderDetailPage() {
 
       <div className="detail-header">
         <div>
-          <h1>{order.tracking_id}</h1>
+          <h1>{trackingNumber}</h1>
           <span className={`status-badge status-${statusSlug(order.status)}`}>{order.status ?? '—'}</span>
         </div>
-        <Link to={`/track?t=${order.tracking_id}`} className="btn-outline btn-sm">Public Tracking Page</Link>
+        <Link to={`/track?t=${trackingNumber}`} className="btn-outline btn-sm">Public Tracking Page</Link>
       </div>
 
       <div className="detail-grid">
         <div className="detail-card">
           <h3>Order Info</h3>
           <dl>
-            <dt>Tracking ID</dt><dd>{order.tracking_id}</dd>
+            <dt>Tracking Number</dt><dd>{trackingNumber}</dd>
             <dt>Consignee</dt><dd>{order.consignee ?? order.customer_name ?? '—'}</dd>
+            <dt>Consignee Phone</dt><dd>{safeText(order.consignee_phone)}</dd>
             <dt>City</dt><dd>{order.city ?? '—'}</dd>
+            <dt>Address</dt><dd>{safeText(order.address)}</dd>
             <dt>COD Amount</dt><dd>Rs. {order.cod ?? 0}</dd>
+            <dt>Instructions</dt><dd>{safeText(order.instructions)}</dd>
             <dt>Created</dt><dd>{new Date(order.created_at).toLocaleString()}</dd>
             <dt>Last Updated</dt><dd>{new Date(order.updated_at).toLocaleString()}</dd>
           </dl>
         </div>
+
+        {qrUrl && (
+          <div className="detail-card">
+            <h3>QR Code</h3>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '16px' }}>
+              <img src={qrUrl} alt="QR code" style={{ width: 160, height: 160, borderRadius: 8, border: '1px solid var(--slate-200)' }} />
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="detail-section">

@@ -16,7 +16,7 @@ export default function DashboardTrackPage() {
 
     setLoading(true)
     try {
-      const data = await trackOrder(trackingId.trim().toUpperCase())
+      const data = await trackOrder(trackingId.trim())
       setResult(data)
     } catch {
       setError('No order found with that tracking ID.')
@@ -57,7 +57,7 @@ export default function DashboardTrackPage() {
           <div className="track-result-header">
             <div>
               <span className="track-label">Tracking ID</span>
-              <span className="track-value">{result.tracking_id}</span>
+              <span className="track-value">{result.cn ?? result.tracking_id}</span>
             </div>
             <div>
               <span className="track-label">Status</span>

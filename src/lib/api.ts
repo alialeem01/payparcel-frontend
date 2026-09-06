@@ -57,12 +57,15 @@ export interface Order {
   tracking_id: string
   customer_name: string
   consignee: string
-  status: OrderStatus
+  consignee_phone: string | null
+  address: string | null
   city: string | null
+  status: OrderStatus
   cod: number
   created_at: string
   updated_at: string
   tracking_qr_code: string | null
+  instructions: string | null
 }
 
 export interface OrderStatusCount {
@@ -99,12 +102,16 @@ export interface DashboardSummary {
 
 export interface TrackingResult {
   tracking_id: string
+  cn: string | null
   status: OrderStatus
   city: string | null
   consignee: string
+  consignee_phone: string | null
+  address: string | null
   shipment_date: string | null
   shipper_name: string
   delivery_date: string | null
+  instructions: string | null
 }
 
 export function statusSlug(status: string | null | undefined): string {
@@ -214,12 +221,31 @@ export function scheduleRefresh(): void {
   const token = getAccessToken()
   if (!token) return
   const exp = decodeTokenExp(token)
-  if (!exp) return
+  if (!exp) {
+    // Can't decode expiry — schedule a periodic refresh as fallback
+    refreshTimer = setTimeout(() => refreshAccessToken(), 5 * 60_000)
+    return
+  }
   const delay = exp - Date.now() - 60_000
   if (delay <= 0) {
     refreshAccessToken()
   } else {
     refreshTimer = setTimeout(() => refreshAccessToken(), delay)
+  }
+}
+
+/**
+ * Check if the access token is expired (or about to expire) and refresh if needed.
+ * Called on visibility change and periodically to keep sessions alive.
+ */
+export async function ensureFreshToken(): Promise<void> {
+  const token = getAccessToken()
+  if (!token) return
+  const exp = decodeTokenExp(token)
+  if (!exp) return
+  // If token expires within the next 2 minutes, refresh now
+  if (exp - Date.now() < 120_000) {
+    await refreshAccessToken()
   }
 }
 
@@ -384,7 +410,7 @@ export async function updateOrderStatus(id: string, status: OrderStatus): Promis
 }
 
 export async function trackOrder(trackingId: string): Promise<TrackingResult> {
-  const res = await fetch(`${API_BASE_URL}/api/track/${trackingId}/`)
+  const res = await fetch(`${API_BASE_URL}/api/track/${encodeURIComponent(trackingId)}/`)
   if (res.status === 404) {
     throw new Error('Tracking ID not found')
   }
@@ -426,6 +452,17 @@ export function generateTrackingId(): string {
   return `${prefix}${y}${m}${d}${rand}`
 }
 
+export interface DeliverySheetParcel {
+  cn: string
+  consignee: string
+  consignee_phone: string | null
+  address: string | null
+  city: string | null
+  instructions: string | null
+  qr_url: string | null
+  cod: number
+}
+
 export interface DeliverySheet {
   ds_number: string
   tracking_number: string
@@ -439,6 +476,7 @@ export interface DeliverySheet {
   total_weight: number
   total_cod: number
   print_url: string | null
+  parcels: DeliverySheetParcel[] | null
 }
 
 export async function fetchDeliverySheets(): Promise<DeliverySheet[]> {

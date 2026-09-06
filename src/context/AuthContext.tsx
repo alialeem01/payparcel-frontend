@@ -7,6 +7,7 @@ import {
   getAccessToken,
   setAuthExpiredHandler,
   scheduleRefresh,
+  ensureFreshToken,
   type Customer,
 } from '../lib/api'
 
@@ -68,7 +69,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.location.href = '/login'
     })
     loadProfile()
-    return () => setAuthExpiredHandler(null)
+
+    // When the user returns to the tab after being away, check if the token
+    // needs refreshing so they don't get logged out after idle periods.
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') {
+        ensureFreshToken()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    // Periodic safety net: check every 5 minutes in case the proactive
+    // timer was throttled by the browser while the tab was active.
+    const interval = setInterval(() => ensureFreshToken(), 5 * 60 * 1000)
+
+    return () => {
+      setAuthExpiredHandler(null)
+      document.removeEventListener('visibilitychange', handleVisibility)
+      clearInterval(interval)
+    }
   }, [])
 
   const value: AuthContextType = {
