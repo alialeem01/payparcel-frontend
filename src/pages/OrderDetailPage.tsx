@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { fetchOrder, updateOrderStatus, resolveApiUrl, ORDER_STATUSES, STATUS_PROGRESS, TERMINAL_STATUSES, statusSlug, safeText, type Order, type OrderStatus } from '../lib/api'
+import { fetchOrder, resolveApiUrl, STATUS_PROGRESS, TERMINAL_STATUSES, statusSlug, safeText, type Order } from '../lib/api'
 import { Loader2, ArrowLeft, Package, CheckCircle2, Clock } from 'lucide-react'
 
 export default function OrderDetailPage() {
@@ -8,7 +8,6 @@ export default function OrderDetailPage() {
   const navigate = useNavigate()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
-  const [updating, setUpdating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -18,19 +17,6 @@ export default function OrderDetailPage() {
       .catch(() => setError('Order not found.'))
       .finally(() => setLoading(false))
   }, [id])
-
-  async function handleUpdateStatus(newStatus: OrderStatus) {
-    if (!order) return
-    setUpdating(true)
-    try {
-      await updateOrderStatus(order.id ?? order.cn, newStatus)
-      setOrder({ ...order, status: newStatus, updated_at: new Date().toISOString() })
-    } catch {
-      // keep current status on failure
-    } finally {
-      setUpdating(false)
-    }
-  }
 
   if (loading) return <div className="page-center"><Loader2 size={32} className="spin" /></div>
 
@@ -49,7 +35,7 @@ export default function OrderDetailPage() {
   const isTerminal = (TERMINAL_STATUSES as string[]).includes(order.status)
   const currentStepIndex = STATUS_PROGRESS.indexOf(order.status as (typeof STATUS_PROGRESS)[number])
   const showProgress = !isTerminal && currentStepIndex >= 0
-  const trackingNumber = order.cn ?? order.tracking_id ?? '—'
+  const trackingNumber = order.cn ?? '—'
   const qrUrl = resolveApiUrl(order.tracking_qr_code)
 
   return (
@@ -109,19 +95,6 @@ export default function OrderDetailPage() {
           </div>
         ) : (
           <div className="cancelled-notice">Status: {order.status ?? 'Unknown'}</div>
-        )}
-
-        {!isTerminal && (
-          <div className="status-update-bar">
-            <span>Update status to:</span>
-            <select defaultValue="" onChange={(e) => e.target.value && handleUpdateStatus(e.target.value as OrderStatus)} disabled={updating}>
-              <option value="" disabled>Select new status...</option>
-              {ORDER_STATUSES.filter((s) => s !== order.status).map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-            {updating && <Loader2 size={16} className="spin" />}
-          </div>
         )}
       </div>
     </div>

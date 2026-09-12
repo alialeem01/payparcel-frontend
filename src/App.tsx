@@ -14,6 +14,7 @@ import EditInfoPage from './pages/EditInfoPage'
 import DeliverySheetsPage from './pages/DeliverySheetsPage'
 import BulkBookingPage from './pages/BulkBookingPage'
 import PublicHeader from './components/PublicHeader'
+import ErrorBoundary from './components/ErrorBoundary'
 import { Loader2, CreditCard, BarChart3 } from 'lucide-react'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -66,10 +67,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AuthProvider>
+    </ErrorBoundary>
   )
 }

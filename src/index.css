@@ -812,6 +812,8 @@ button.row-link:not(:disabled):hover { color: var(--blue-700); }
 .card-purple .status-card-top { color: #9333ea; }
 .card-slate .summary-card-header { background: var(--slate-500); }
 .card-slate .status-card-top { color: var(--slate-600); }
+.card-indigo .summary-card-header { background: #6366f1; }
+.card-indigo .status-card-top { color: #4f46e5; }
 
 /* Chart */
 .chart-card {
