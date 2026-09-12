@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { fetchDashboardSummary, type DashboardSummary, type OrderStatusCount } from '../lib/api'
-import { Loader2, Calendar, TrendingUp, Wallet, Truck, PackageCheck, Clock, AlertCircle, CheckCircle2, PackageX, Package, RotateCcw } from 'lucide-react'
+import { Loader2, Calendar, TrendingUp, Wallet, Truck, PackageCheck, Clock, AlertCircle, CheckCircle2, PackageX, Package, RotateCcw, Send } from 'lucide-react'
 
 function formatRs(value: number | null | undefined): string {
   return new Intl.NumberFormat('en-PK', { maximumFractionDigits: 0 }).format(value ?? 0)
@@ -42,7 +42,8 @@ function normalizeSummary(raw: unknown): DashboardSummary {
       pending: safeStatusCount(ord?.pending),
       delivered: safeStatusCount(ord?.delivered),
       not_arrived: safeStatusCount(ord?.not_arrived),
-      arrived: safeStatusCount(ord?.arrived),
+      ready_for_pickup: safeStatusCount(ord?.ready_for_pickup),
+      out_for_delivery: safeStatusCount(ord?.out_for_delivery),
       ready_to_return: safeStatusCount(ord?.ready_to_return),
       rts: safeStatusCount(ord?.rts),
     },
@@ -96,7 +97,8 @@ export default function DashboardHome() {
     { label: 'Pending Order', data: summary.orders.pending, icon: Clock, color: 'amber' },
     { label: 'Delivered', data: summary.orders.delivered, icon: CheckCircle2, color: 'green' },
     { label: 'Not Arrived Orders', data: summary.orders.not_arrived, icon: PackageX, color: 'orange' },
-    { label: 'Arrived Orders', data: summary.orders.arrived, icon: PackageCheck, color: 'teal' },
+    { label: 'Ready for Pickup', data: summary.orders.ready_for_pickup, icon: PackageCheck, color: 'teal' },
+    { label: 'Out for Delivery', data: summary.orders.out_for_delivery, icon: Send, color: 'indigo' },
     { label: 'Ready to Return Orders', data: summary.orders.ready_to_return, icon: RotateCcw, color: 'purple' },
     { label: 'RTS Orders', data: summary.orders.rts, icon: Package, color: 'slate' },
   ] : []

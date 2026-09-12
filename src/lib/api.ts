@@ -26,21 +26,9 @@ export const STATUS_PROGRESS: OrderStatus[] = [
 
 export const TERMINAL_STATUSES: OrderStatus[] = ['Delivered', 'Returned', 'Parcel Not Available']
 
-export const CITIES = [
-  'Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan',
-  'Peshawar', 'Quetta', 'Sialkot', 'Gujranwala', 'Hyderabad', 'Bahawalpur',
-  'Sargodha', 'Sukkur', 'Larkana', 'Sheikhupura', 'Rahim Yar Khan', 'Jhang',
-  'Gujrat', 'Mardan', 'Kasur', 'Dera Ghazi Khan', 'Sahiwal', 'Nawabshah',
-  'Mingora', 'Okara', 'Mirpur Khas', 'Chiniot', 'Kamoke', 'Mandi Bahauddin',
-  'Jhelum', 'Sadiqabad', 'Jacobabad', 'Shikarpur', 'Khanewal', 'Hafizabad',
-  'Kohat', 'Muzaffargarh', 'Khanpur', 'Gojra', 'Abbottabad', 'Turbat',
-  'Dadu', 'Bahawalnagar', 'Muridke', 'Pakpattan', 'Attock', 'Vehari',
-  'Nowshera', 'Chakwal', 'Swabi', 'Dera Ismail Khan', 'Chishtian', 'Daska',
-  'Mansehra', 'Nankana Sahib', 'Wah Cantt', 'Kot Addu', 'Toba Tek Singh',
-  'Ahmedpur East', 'Khairpur', 'Chaman', 'Zhob', 'Gwadar', 'Khuzdar',
-  'Muzaffarabad', 'Mirpur (AJK)', 'Gilgit', 'Skardu', 'Charsadda', 'Hangu',
-  'Ferozwala', 'Burewala', 'Jaranwala', 'Kabirwala',
-]
+// Kept in sync with the backend's PAKISTAN_CITIES choice list (parcels/models.py),
+// which currently only accepts Karachi - booking with any other city is rejected.
+export const CITIES = ['Karachi']
 
 export interface Customer {
   id: string
@@ -54,7 +42,6 @@ export interface Customer {
 export interface Order {
   id: string
   cn: string
-  tracking_id: string
   customer_name: string
   consignee: string
   consignee_phone: string | null
@@ -93,7 +80,8 @@ export interface DashboardSummary {
     pending: OrderStatusCount
     delivered: OrderStatusCount
     not_arrived: OrderStatusCount
-    arrived: OrderStatusCount
+    ready_for_pickup: OrderStatusCount
+    out_for_delivery: OrderStatusCount
     ready_to_return: OrderStatusCount
     rts: OrderStatusCount
   }
@@ -101,7 +89,6 @@ export interface DashboardSummary {
 }
 
 export interface TrackingResult {
-  tracking_id: string
   cn: string | null
   status: OrderStatus
   city: string | null
@@ -398,15 +385,6 @@ export async function bulkBookOrders(file: File): Promise<BulkBookResponse> {
     body: formData,
   })
   return handleResponse<BulkBookResponse>(res)
-}
-
-export async function updateOrderStatus(id: string, status: OrderStatus): Promise<void> {
-  const res = await apiFetch(`/api/orders/${id}/`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status }),
-  })
-  await handleResponse(res)
 }
 
 export async function trackOrder(trackingId: string): Promise<TrackingResult> {

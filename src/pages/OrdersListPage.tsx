@@ -23,7 +23,6 @@ export default function OrdersListPage() {
     const q = search.toLowerCase()
     return (
       (o.cn ?? '').toLowerCase().includes(q) ||
-      (o.tracking_id ?? '').toLowerCase().includes(q) ||
       (o.consignee ?? '').toLowerCase().includes(q) ||
       (o.status ?? '').toLowerCase().includes(q) ||
       (o.city ?? '').toLowerCase().includes(q)
@@ -71,7 +70,7 @@ export default function OrdersListPage() {
                 const qrUrl = resolveApiUrl(o.tracking_qr_code)
                 return (
                   <tr key={o.id}>
-                    <td className="tracking-cell">{o.cn ?? o.tracking_id ?? '—'}</td>
+                    <td className="tracking-cell">{o.cn ?? '—'}</td>
                     <td>
                       {qrUrl ? (
                         <img src={qrUrl} alt="QR code" className="qr-thumb" />
