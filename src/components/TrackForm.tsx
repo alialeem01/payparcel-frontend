@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { trackOrder, STATUS_PROGRESS, TERMINAL_STATUSES, statusSlug, safeText, type TrackingResult } from '../lib/api'
-import { Loader2, CheckCircle2, Clock, MapPin, User, Calendar, Building2, Package } from 'lucide-react'
+import { Loader2, CheckCircle2, Clock, MapPin, Phone, Calendar, Building2, Package, Wallet, Hash, Truck, FileText } from 'lucide-react'
 
 export default function TrackForm({ initialTrackingId = '' }: { initialTrackingId?: string }) {
   const [trackingId, setTrackingId] = useState(initialTrackingId)
@@ -100,10 +100,15 @@ export default function TrackForm({ initialTrackingId = '' }: { initialTrackingI
 
           <div className="track-meta">
             <div><MapPin size={16} /> <span className="track-label">City</span> {safeText(result.city)}</div>
-            <div><User size={16} /> <span className="track-label">Consignee</span> {safeText(result.consignee)}</div>
+            <div><Phone size={16} /> <span className="track-label">Consignee Phone</span> {safeText(result.consignee_phone)}</div>
+            <div><Building2 size={16} /> <span className="track-label">Address</span> {safeText(result.address)}</div>
             <div><Building2 size={16} /> <span className="track-label">Shipper</span> {safeText(result.shipper_name)}</div>
+            <div><Wallet size={16} /> <span className="track-label">COD Amount</span> Rs. {result.cod ?? 0}</div>
+            <div><Hash size={16} /> <span className="track-label">Order Number</span> {safeText(result.order_number)}</div>
+            <div><Truck size={16} /> <span className="track-label">Service Type</span> {safeText(result.service_type)}</div>
             <div><Calendar size={16} /> <span className="track-label">Shipment Date</span> {result.shipment_date ? new Date(result.shipment_date).toLocaleString() : '—'}</div>
             <div><Package size={16} /> <span className="track-label">Delivery Date</span> {result.delivery_date ? new Date(result.delivery_date).toLocaleString() : '—'}</div>
+            <div><FileText size={16} /> <span className="track-label">Instructions</span> {safeText(result.instructions)}</div>
           </div>
         </div>
       )}

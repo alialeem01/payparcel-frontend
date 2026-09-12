@@ -62,6 +62,8 @@ export default function OrderDetailPage() {
             <dt>City</dt><dd>{order.city ?? '—'}</dd>
             <dt>Address</dt><dd>{safeText(order.address)}</dd>
             <dt>COD Amount</dt><dd>Rs. {order.cod ?? 0}</dd>
+            <dt>Order Number</dt><dd>{safeText(order.order_number)}</dd>
+            <dt>Service Type</dt><dd>{safeText(order.service_type)}</dd>
             <dt>Instructions</dt><dd>{safeText(order.instructions)}</dd>
             <dt>Created</dt><dd>{new Date(order.created_at).toLocaleString()}</dd>
             <dt>Last Updated</dt><dd>{new Date(order.updated_at).toLocaleString()}</dd>

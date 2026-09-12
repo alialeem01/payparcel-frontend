@@ -143,7 +143,10 @@ function openPrintWindow(sheet: DeliverySheet) {
 </body>
 </html>`
 
-  const printWin = window.open('', '_blank', 'noopener,noreferrer')
+  // Note: 'noopener' would make window.open() return null, so the print
+  // window could never be written to - omitted deliberately. Safe here
+  // since we only ever write our own trusted HTML into the new window.
+  const printWin = window.open('', '_blank')
   if (printWin) {
     printWin.document.open()
     printWin.document.write(html)
