@@ -507,3 +507,32 @@ export async function fetchDeliverySheets(): Promise<DeliverySheet[]> {
   const res = await apiFetch('/api/customers/delivery-sheets/')
   return handleResponse<DeliverySheet[]>(res)
 }
+
+export type InvoiceStatus = 'Paid' | 'Unpaid'
+
+export interface Invoice {
+  invoice_number: string
+  status: InvoiceStatus
+  date: string
+  account_name: string
+  cod: number
+  flyer_charges: number
+  total_tax: number
+  delivery_charges: number
+  net_amount: number
+  parcel_from: string | null
+  parcel_to: string | null
+  total_parcel: number
+}
+
+export interface BillingSummary {
+  balance_payment: number
+  cod_delivered_return: number
+  delivery_flyer_charges: number
+  invoices: Invoice[]
+}
+
+export async function fetchBillingSummary(): Promise<BillingSummary> {
+  const res = await apiFetch('/api/customers/billing/')
+  return handleResponse<BillingSummary>(res)
+}
