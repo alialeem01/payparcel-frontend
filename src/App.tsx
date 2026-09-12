@@ -13,9 +13,10 @@ import DashboardTrackPage from './pages/DashboardTrackPage'
 import EditInfoPage from './pages/EditInfoPage'
 import DeliverySheetsPage from './pages/DeliverySheetsPage'
 import BulkBookingPage from './pages/BulkBookingPage'
+import BillingPage from './pages/BillingPage'
 import PublicHeader from './components/PublicHeader'
 import ErrorBoundary from './components/ErrorBoundary'
-import { Loader2, CreditCard, BarChart3 } from 'lucide-react'
+import { Loader2, BarChart3 } from 'lucide-react'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -56,7 +57,7 @@ function AppRoutes() {
         <Route path="orders/:id" element={<OrderDetailPage />} />
         <Route path="track" element={<DashboardTrackPage />} />
         <Route path="delivery-sheets" element={<DeliverySheetsPage />} />
-        <Route path="billing" element={<ComingSoonPage title="Billing" icon={CreditCard} />} />
+        <Route path="billing" element={<BillingPage />} />
         <Route path="edit-info" element={<EditInfoPage />} />
         <Route path="reports" element={<ComingSoonPage title="Reports" icon={BarChart3} />} />
       </Route>
