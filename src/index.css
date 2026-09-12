@@ -804,45 +804,36 @@ button.row-link:not(:disabled):hover { color: var(--blue-700); }
   gap: 12px;
 }
 
+/* Solid color-block cards, matching the admin dashboard's stat-card design. */
 .summary-card {
-  background: var(--white);
-  border: 1px solid var(--slate-200);
   border-radius: var(--radius-sm);
   overflow: hidden;
   transition: all 0.2s;
+  color: #fff;
 }
 .summary-card:hover { box-shadow: var(--shadow); }
-.summary-card-header { height: 4px; }
+.summary-card-header { display: none; }
 .summary-card-body {
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-.summary-card-label { font-size: 13px; font-weight: 600; color: var(--slate-500); }
-.summary-card-value { font-size: 22px; font-weight: 700; color: var(--slate-900); }
+.summary-card-label { font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.85); }
+.summary-card-value { font-size: 22px; font-weight: 700; color: #fff; }
 .status-count { font-size: 32px; }
-.summary-card-amount { font-size: 13px; font-weight: 600; color: var(--slate-500); }
-.status-card-top { display: flex; align-items: center; gap: 8px; }
+.summary-card-amount { font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.85); }
+.status-card-top { display: flex; align-items: center; gap: 8px; color: rgba(255, 255, 255, 0.85); }
 
-.card-blue .summary-card-header { background: var(--blue-500); }
-.card-blue .status-card-top { color: var(--blue-600); }
-.card-green .summary-card-header { background: var(--green-500); }
-.card-green .status-card-top { color: var(--green-600); }
-.card-orange .summary-card-header { background: var(--orange-500); }
-.card-orange .status-card-top { color: var(--orange-500); }
-.card-amber .summary-card-header { background: var(--amber-500); }
-.card-amber .status-card-top { color: var(--amber-500); }
-.card-red .summary-card-header { background: var(--red-500); }
-.card-red .status-card-top { color: var(--red-500); }
-.card-teal .summary-card-header { background: #14b8a6; }
-.card-teal .status-card-top { color: #0d9488; }
-.card-purple .summary-card-header { background: #a855f7; }
-.card-purple .status-card-top { color: #9333ea; }
-.card-slate .summary-card-header { background: var(--slate-500); }
-.card-slate .status-card-top { color: var(--slate-600); }
-.card-indigo .summary-card-header { background: #6366f1; }
-.card-indigo .status-card-top { color: #4f46e5; }
+.card-blue { background: #1d4ed8; }
+.card-green { background: #16a34a; }
+.card-orange { background: #ea580c; }
+.card-amber { background: #d97706; }
+.card-red { background: #dc2626; }
+.card-teal { background: #0e7490; }
+.card-purple { background: #7c3aed; }
+.card-slate { background: #475569; }
+.card-indigo { background: #4f46e5; }
 
 /* Chart */
 .chart-card {
