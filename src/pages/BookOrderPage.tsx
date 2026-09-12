@@ -1,9 +1,11 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { bookOrder, CITIES, type BookOrderPayload } from '../lib/api'
-import { Loader2, PackagePlus, CheckCircle2 } from 'lucide-react'
+import { bookOrder, calculateOrderCharges, CITIES, SERVICE_TYPES, type BookOrderPayload, type CalculatedCharges } from '../lib/api'
+import { Loader2, PackagePlus, CheckCircle2, Calculator } from 'lucide-react'
 
-const SERVICE_TYPES = ['COD', 'Non COD', 'Overnight', 'Overland']
+function formatRs(value: number): string {
+  return new Intl.NumberFormat('en-PK', { maximumFractionDigits: 2 }).format(value)
+}
 
 export default function BookOrderPage() {
   const navigate = useNavigate()
@@ -24,10 +26,30 @@ export default function BookOrderPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [trackingNumber, setTrackingNumber] = useState<string | null>(null)
+  const [charges, setCharges] = useState<CalculatedCharges | null>(null)
+  const [chargesLoading, setChargesLoading] = useState(false)
 
   function updateField<K extends keyof BookOrderPayload>(key: K, value: BookOrderPayload[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
   }
+
+  // Live delivery-charge/tax preview - recalculates as weight or service type
+  // change, mirroring the reference booking form's behavior. Debounced so it
+  // doesn't fire on every keystroke.
+  useEffect(() => {
+    if (!form.service_type || !form.parcel_weight) {
+      setCharges(null)
+      return
+    }
+    setChargesLoading(true)
+    const timer = setTimeout(() => {
+      calculateOrderCharges(form.service_type, form.parcel_weight)
+        .then(setCharges)
+        .catch(() => setCharges(null))
+        .finally(() => setChargesLoading(false))
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [form.service_type, form.parcel_weight])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -52,6 +74,7 @@ export default function BookOrderPage() {
 
   function resetForm() {
     setTrackingNumber(null)
+    setCharges(null)
     setForm({
       consignee: '',
       consignee_phone: '',
@@ -164,6 +187,34 @@ export default function BookOrderPage() {
             </label>
           </div>
         </fieldset>
+
+        {form.parcel_weight > 0 && (
+          <div className="charge-preview">
+            <div className="charge-preview-header">
+              <Calculator size={16} />
+              <span>Estimated Delivery Charges</span>
+              {chargesLoading && <Loader2 size={14} className="spin" />}
+            </div>
+            <div className="charge-preview-grid">
+              <div>
+                <span className="track-label">Delivery Charge</span>
+                <span>Rs. {formatRs(charges?.delivery_charge ?? 0)}</span>
+              </div>
+              <div>
+                <span className="track-label">GST</span>
+                <span>Rs. {formatRs(charges?.gst ?? 0)}</span>
+              </div>
+              <div>
+                <span className="track-label">Fuel Charge</span>
+                <span>Rs. {formatRs(charges?.fuel ?? 0)}</span>
+              </div>
+              <div className="charge-preview-total">
+                <span className="track-label">D.C Total</span>
+                <span>Rs. {formatRs(charges?.total ?? 0)}</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {error && <div className="form-error">{error}</div>}
 

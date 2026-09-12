@@ -17,6 +17,13 @@ export const ORDER_STATUSES: OrderStatus[] = [
   'Returned',
 ]
 
+// Matches the backend's TaxTemplateEntry/RateTemplateEntry service_type
+// values exactly - a mismatch here means pricing lookups silently return 0.
+export const SERVICE_TYPES = [
+  'COD', 'Non COD', 'Detain', 'Overland (Non COD)', 'overland COD',
+  'OverNight (COD)', 'OverNight (Non COD)', 'Bulk', 'Special Service',
+]
+
 export const STATUS_PROGRESS: OrderStatus[] = [
   'Order',
   'Ready for Pickup',
@@ -370,6 +377,22 @@ export async function bookOrder(payload: BookOrderPayload): Promise<BookOrderRes
     body: JSON.stringify(payload),
   })
   return handleResponse<BookOrderResponse>(res)
+}
+
+export interface CalculatedCharges {
+  delivery_charge: number
+  gst: number
+  fuel: number
+  total: number
+}
+
+export async function calculateOrderCharges(serviceType: string, weight: number): Promise<CalculatedCharges> {
+  const res = await apiFetch('/api/orders/calculate/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ service_type: serviceType, parcel_weight: weight }),
+  })
+  return handleResponse<CalculatedCharges>(res)
 }
 
 export interface BulkBookError {
