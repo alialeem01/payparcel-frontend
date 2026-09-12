@@ -23,6 +23,7 @@ export default function OrdersListPage() {
     const q = search.toLowerCase()
     return (
       (o.cn ?? '').toLowerCase().includes(q) ||
+      (o.order_number ?? '').toLowerCase().includes(q) ||
       (o.consignee ?? '').toLowerCase().includes(q) ||
       (o.status ?? '').toLowerCase().includes(q) ||
       (o.city ?? '').toLowerCase().includes(q)

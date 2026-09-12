@@ -49,6 +49,8 @@ export interface Order {
   city: string | null
   status: OrderStatus
   cod: number
+  order_number: string | null
+  service_type: string | null
   created_at: string
   updated_at: string
   tracking_qr_code: string | null
@@ -95,6 +97,9 @@ export interface TrackingResult {
   consignee: string
   consignee_phone: string | null
   address: string | null
+  cod: number
+  order_number: string | null
+  service_type: string | null
   shipment_date: string | null
   shipper_name: string
   delivery_date: string | null
