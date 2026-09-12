@@ -62,6 +62,24 @@ export interface Order {
   updated_at: string
   tracking_qr_code: string | null
   instructions: string | null
+  parcel_weight: number
+  number_of_pieces: number
+  product: string | null
+  flyer_charges: number
+  total_gst: number
+  total_feul_tax: number
+  delivery_charge: number
+  payment_status: 'Paid' | 'Unpaid'
+}
+
+// Net amount owed between the courier and this shipper for one parcel:
+// COD collected minus every fee. Positive = the courier owes the shipper
+// (shown with an up arrow on the reference site); negative = the shipper
+// owes the courier (down arrow). Matches the reference site's own display
+// convention exactly (verified against several real invoices/list rows).
+export function netOwed(order: Order): number {
+  return (order.cod ?? 0) - (order.total_gst ?? 0) - (order.total_feul_tax ?? 0)
+    - (order.flyer_charges ?? 0) - (order.delivery_charge ?? 0)
 }
 
 export interface OrderStatusCount {

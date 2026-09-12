@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchDeliverySheets, resolveApiUrl, statusSlug, safeText, type DeliverySheet, type DeliverySheetParcel } from '../lib/api'
+import { escapeHtml, openPrintDocument } from '../lib/print'
 import { ClipboardList, Loader2, Printer, Search } from 'lucide-react'
 
 function formatRs(value: number): string {
@@ -10,15 +11,6 @@ function formatDate(value: string | null | undefined): string {
   if (!value) return '—'
   const d = new Date(value)
   return isNaN(d.getTime()) ? '—' : d.toLocaleDateString()
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
 }
 
 function openPrintWindow(sheet: DeliverySheet) {
@@ -143,15 +135,7 @@ function openPrintWindow(sheet: DeliverySheet) {
 </body>
 </html>`
 
-  // Note: 'noopener' would make window.open() return null, so the print
-  // window could never be written to - omitted deliberately. Safe here
-  // since we only ever write our own trusted HTML into the new window.
-  const printWin = window.open('', '_blank')
-  if (printWin) {
-    printWin.document.open()
-    printWin.document.write(html)
-    printWin.document.close()
-  }
+  openPrintDocument(html)
 }
 
 export default function DeliverySheetsPage() {
